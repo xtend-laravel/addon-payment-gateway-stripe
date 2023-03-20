@@ -1,0 +1,33 @@
+{
+    "name": "xtend-laravel/addon-payment-gateway-stripe",
+    "description": "Stripe Payment Gateway for XtendLunar",
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "xtendlunar",
+        "payment",
+        "gateway",
+        "stripe"
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "XtendLunar\\Addons\\PaymentGatewayStripe\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adam Lee",
+            "email": "adam@codelabx.ltd"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "XtendLunar\\Addons\\PaymentGatewayStripe\\PaymentGatewayStripeProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {}
+}
