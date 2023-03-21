@@ -2,11 +2,11 @@
 
 namespace XtendLunar\Addons\PaymentGatewayStripe\Restify\Presenters;
 
-use XtendLunar\Addons\PaymentGateways\Restify\Presenters\PaymentGatewayPresenter;
 use XtendLunar\Addons\RestifyApi\Restify\Contracts\Presentable;
 use Binaryk\LaravelRestify\Http\Requests\RestifyRequest;
+use XtendLunar\Addons\RestifyApi\Restify\Presenters\PresenterResource;
 
-class StripePresenter extends PaymentGatewayPresenter implements Presentable
+class StripePresenter extends PresenterResource implements Presentable
 {
     public function transform(RestifyRequest $request): array
     {
