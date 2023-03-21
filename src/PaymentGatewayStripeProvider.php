@@ -22,19 +22,21 @@ class PaymentGatewayStripeProvider extends XtendAddonProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'xtend-lunar::payment-gateway-stripe');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'xtend-lunar::payment-gateway-stripe');
         $this->loadRestifyFrom(__DIR__.'/Restify', __NAMESPACE__.'\\Restify\\');
+
         $this->registerWithCartPipeline([PaymentIntent::class]);
+        $this->mergeConfigFrom(__DIR__.'/../config/stripe.php', 'stripe');
     }
 
     public function boot()
     {
         Blade::componentNamespace('XtendLunar\\Addons\\PaymentGatewayStripe\\Components', 'xtend-lunar::payment-gateway-stripe');
 
-        Payments::extend('stripe', function ($app) {
-            return $app->make(StripePayment::class);
+        $this->app->singleton(StripeConnectInterface::class, function ($app) {
+            return new StripeClient(config('stripe.key'));
         });
 
-        $this->app->singleton(StripeConnectInterface::class, function ($app) {
-            return new StripeClient(config('services.stripe.key'));
+        Payments::extend('stripe', function ($app) {
+            return $app->make(StripePayment::class);
         });
     }
 }
