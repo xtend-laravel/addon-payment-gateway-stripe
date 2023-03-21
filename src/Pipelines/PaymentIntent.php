@@ -24,14 +24,17 @@ class PaymentIntent
         }
 
         $this->initStripe();
+        $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
+            'amount' => $cart->total->value,
+            'currency' => $cart->currency->code,
+            'payment_method_types' => ['card'],
+            'capture_method' => config('stripe.capture_method'),
+        ]));
+
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
-                'payment_intent' => $this->updateOrCreatePaymentIntent($cart, collect([
-                    'amount' => $cart->total->value,
-                    'currency' => $cart->currency->code,
-                    'payment_method_types' => ['card'],
-                    'capture_method' => config('stripe.capture_method'),
-                ]))->id,
+                'stripe_payment_intent' => $paymentIntent->id,
+                'stripe_client_secret' => $paymentIntent->client_secret,
             ]),
         ]);
 
