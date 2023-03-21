@@ -3,6 +3,7 @@
 namespace XtendLunar\Addons\PaymentGatewayStripe\Pipelines;
 
 use Closure;
+use Illuminate\Http\Request;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayStripe\Concerns\WithStripeClient;
 
@@ -17,6 +18,11 @@ class PaymentIntent
      */
     public function handle(Cart $cart, Closure $next)
     {
+        // Ignores current cart getter request
+        if (request()->route()->parameter('getter') === 'current-cart') {
+            return $next($cart);
+        }
+
         $this->initStripe();
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
