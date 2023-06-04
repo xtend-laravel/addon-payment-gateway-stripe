@@ -19,9 +19,9 @@ class PaymentIntent
     public function handle(Cart $cart, Closure $next)
     {
         // Ignores current cart getter request
-        // if (request()->route()->parameter('getter') === 'current-cart') {
-        //     return $next($cart);
-        // }
+        if (request()->route()->parameter('getter') === 'current-cart') {
+            return $next($cart);
+        }
 
         $this->initStripe();
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
