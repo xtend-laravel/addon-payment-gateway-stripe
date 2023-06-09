@@ -3,7 +3,6 @@
 namespace XtendLunar\Addons\PaymentGatewayStripe\Pipelines;
 
 use Closure;
-use Illuminate\Http\Request;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayStripe\Concerns\WithStripeClient;
 
@@ -24,11 +23,23 @@ class PaymentIntent
         }
 
         $this->initStripe();
+        $shipping = $cart->shippingAddress;
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
             'amount' => $cart->total->value,
             'currency' => $cart->currency->code,
             'payment_method_types' => ['card'],
             'capture_method' => config('stripe.capture_method'),
+            'shipping' => $shipping ? [
+                'name' => "{$shipping->first_name} {$shipping->last_name}",
+                'address' => [
+                    'city' => $shipping->city,
+                    'country' => $shipping->country?->iso2,
+                    'line1' => $shipping->line_one,
+                    'line2' => $shipping->line_two,
+                    'postal_code' => $shipping->postcode,
+                    'state' => $shipping->state,
+                ]
+            ] : [],
         ]));
 
         $cart->update([

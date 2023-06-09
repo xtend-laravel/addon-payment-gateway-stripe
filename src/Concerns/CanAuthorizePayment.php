@@ -10,6 +10,6 @@ trait CanAuthorizePayment
 
     public function authorize(): PaymentAuthorize
     {
-        return new PaymentAuthorize($this);
+        return new PaymentAuthorize(true);
     }
 }
