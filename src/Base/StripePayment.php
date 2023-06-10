@@ -23,8 +23,8 @@ class StripePayment extends AbstractPayment implements OnlinePaymentGateway
     {
         $this->initStripe();
         $this->paymentIntent = static::$stripe->paymentIntents->retrieve(
-            $this->data['payment_intent'],
-            static::withStripeHeaders()
+            $this->data['stripe_payment_intent'],
+            static::withStripeHeaders(),
         );
 
         return $this;

@@ -7,6 +7,8 @@ use Lunar\Base\DataTransferObjects\PaymentAuthorize;
 
 trait CanReleasePayment
 {
+    use WithStripeClient;
+
     /**
      * Return a successfully released payment.
      *
@@ -14,6 +16,25 @@ trait CanReleasePayment
      */
     private function releaseSuccess(): PaymentAuthorize
     {
+        return new PaymentAuthorize(
+            success: true,
+            message: 'Payment intent is in a valid state',
+        );
+
+        $chargeId = $this->paymentIntent->latest_charge;
+
+        $charges = static::$stripe->charges->retrieve(
+            $chargeId,
+            static::withStripeHeaders(),
+        );
+
+        if (!$charges) {
+            return new PaymentAuthorize(
+                success: false,
+                message: 'No charges found so can not make any transactions',
+            );
+        }
+
         DB::transaction(function () {
             // Get our first successful charge.
             $charges = $this->paymentIntent->charges->data;

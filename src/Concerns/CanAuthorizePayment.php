@@ -10,7 +10,7 @@ trait CanAuthorizePayment
 
     public function authorize(): PaymentAuthorize
     {
-        if ($this->cart->order->placed_at) {
+        if ($this->cart?->order?->placed_at) {
             return new PaymentAuthorize(
                 success: false,
                 message: 'This order has already been placed',
