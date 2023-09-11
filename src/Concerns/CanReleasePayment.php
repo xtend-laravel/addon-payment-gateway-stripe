@@ -2,7 +2,6 @@
 
 namespace XtendLunar\Addons\PaymentGatewayStripe\Concerns;
 
-use Illuminate\Support\Facades\DB;
 use Lunar\Base\DataTransferObjects\PaymentAuthorize;
 
 trait CanReleasePayment
@@ -16,67 +15,54 @@ trait CanReleasePayment
      */
     private function releaseSuccess(): PaymentAuthorize
     {
-        return new PaymentAuthorize(
-            success: true,
-            message: 'Payment intent is in a valid state',
-        );
-
         $chargeId = $this->paymentIntent->latest_charge;
 
-        $charges = static::$stripe->charges->retrieve(
+        $charge = static::$stripe->charges->retrieve(
             $chargeId,
             static::withStripeHeaders(),
         );
 
-        if (!$charges) {
+        if (!$charge) {
             return new PaymentAuthorize(
                 success: false,
                 message: 'No charges found so can not make any transactions',
             );
         }
 
-        DB::transaction(function () {
-            // Get our first successful charge.
-            $charges = $this->paymentIntent->charges->data;
+        $successCharge =  ! $charge->refunded && ($charge->status == 'succeeded' || $charge->status == 'paid');
+        if (! $successCharge) {
+            return new PaymentAuthorize(
+                success: false,
+                message: 'No successful charges found so can not make any transactions',
+            );
+        }
 
-            $successCharge = collect($charges)->first(function ($charge) {
-                return ! $charge->refunded && ($charge->status == 'succeeded' || $charge->status == 'paid');
-            });
+        $this->order->update([
+            'status' => $this->config['released'] ?? 'paid',
+            'placed_at' => now()->parse($charge->created),
+        ]);
 
-            $this->order->update([
-                'status' => $this->config['released'] ?? 'paid',
-                'placed_at' => now()->parse($successCharge->created),
-            ]);
+        $type = 'capture';
+        $card = $charge->payment_method_details->card;
+        $transaction = [
+            'success' => $charge->status != 'failed',
+            'type' => $charge->amount_refunded ? 'refund' : $type,
+            'driver' => 'stripe',
+            'amount' => $charge->amount,
+            'reference' => $this->paymentIntent->id,
+            'status' => $charge->status,
+            'notes' => $charge->failure_message,
+            'card_type' => $card->brand,
+            'last_four' => $card->last4,
+            'captured_at' => $charge->amount_captured ? now() : null,
+            'meta' => [
+                'address_line1_check' => $card->checks->address_line1_check,
+                'address_postal_code_check' => $card->checks->address_postal_code_check,
+                'cvc_check' => $card->checks->cvc_check,
+            ],
+        ];
 
-            $transactions = [];
-
-            $type = 'capture';
-            // if ($this->policy == 'manual') {
-            //     $type = 'intent';
-            // }
-
-            foreach ($charges as $charge) {
-                $card = $charge->payment_method_details->card;
-                $transactions[] = [
-                    'success' => $charge->status != 'failed',
-                    'type' => $charge->amount_refunded ? 'refund' : $type,
-                    'driver' => 'stripe',
-                    'amount' => $charge->amount,
-                    'reference' => $this->paymentIntent->id,
-                    'status' => $charge->status,
-                    'notes' => $charge->failure_message,
-                    'card_type' => $card->brand,
-                    'last_four' => $card->last4,
-                    'captured_at' => $charge->amount_captured ? now() : null,
-                    'meta' => [
-                        'address_line1_check' => $card->checks->address_line1_check,
-                        'address_postal_code_check' => $card->checks->address_postal_code_check,
-                        'cvc_check' => $card->checks->cvc_check,
-                    ],
-                ];
-            }
-            $this->order->transactions()->createMany($transactions);
-        });
+        $this->order->transactions()->create($transaction);
 
         return new PaymentAuthorize(success: true);
     }
