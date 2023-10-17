@@ -38,7 +38,7 @@ trait CanReleasePayment
         }
 
         $this->order->update([
-            'status' => $this->config['released'] ?? 'paid',
+            'status' => $this->config['released'] ?? 'payment-received',
             'placed_at' => now()->parse($charge->created),
         ]);
 

@@ -31,6 +31,11 @@ trait CanAuthorizePayment
             'requires_capture',
             'succeeded',
         ])) {
+
+            $this->order->update([
+                'status' => $this->config['failed'] ?? 'payment-error',
+            ]);
+
             return new PaymentAuthorize(
                 success: false,
                 message: $this->paymentIntent->last_payment_error ?? 'Payment intent is not in a valid state',
