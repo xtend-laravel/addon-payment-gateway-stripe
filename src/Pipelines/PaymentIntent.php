@@ -24,6 +24,11 @@ class PaymentIntent
 
         $this->initStripe();
         $shipping = $cart->shippingAddress;
+
+        if ($cart->total->value <= 0) {
+            return $next($cart);
+        }
+
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
             'amount' => $cart->total->value,
             'currency' => $cart->currency->code,
