@@ -32,7 +32,6 @@ class StripePayment extends AbstractPayment implements OnlinePaymentGateway
 
     public function handle()
     {
-        dd('handle');
         // Check if we have a valid order in the cart
         if (! $this->cart->hasOrder()) {
             return;

@@ -3,6 +3,7 @@
 namespace XtendLunar\Addons\PaymentGatewayStripe\Pipelines;
 
 use Closure;
+use Illuminate\Support\Str;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayStripe\Concerns\WithStripeClient;
 
@@ -17,7 +18,10 @@ class PaymentIntent
      */
     public function handle(Cart $cart, Closure $next)
     {
-        // Ignores current cart getter request
+        if (request()->has('action') && request()->action === 'create-order-action') {
+            return $next($cart);
+        }
+
         if (request()->route()->parameter('getter') === 'current-cart') {
             return $next($cart);
         }
@@ -59,8 +63,8 @@ class PaymentIntent
 
     protected function updateOrCreatePaymentIntent(Cart $cart, $params): \Stripe\PaymentIntent
     {
-        if ($cart->meta->payment_intent ?? null) {
-            return static::$stripe->paymentIntents->update($cart->meta->payment_intent, $params);
+        if ($cart->meta->stripe_payment_intent ?? null) {
+            return static::$stripe->paymentIntents->update($cart->meta->stripe_payment_intent, $params);
         }
 
         return static::$stripe->paymentIntents->create(
