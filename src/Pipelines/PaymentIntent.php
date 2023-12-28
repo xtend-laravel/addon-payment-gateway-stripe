@@ -3,6 +3,7 @@
 namespace XtendLunar\Addons\PaymentGatewayStripe\Pipelines;
 
 use Closure;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayStripe\Concerns\WithStripeClient;
@@ -36,7 +37,9 @@ class PaymentIntent
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
             'amount' => $cart->total->value,
             'currency' => $cart->currency->code,
-            'payment_method_types' => ['card'],
+            'automatic_payment_methods' => [
+                'enabled' => true,
+            ],
             'capture_method' => config('stripe.capture_method'),
             'shipping' => $shipping ? [
                 'name' => "{$shipping->first_name} {$shipping->last_name}",
@@ -61,14 +64,14 @@ class PaymentIntent
         return $next($cart);
     }
 
-    protected function updateOrCreatePaymentIntent(Cart $cart, $params): \Stripe\PaymentIntent
+    protected function updateOrCreatePaymentIntent(Cart $cart, Collection $params): \Stripe\PaymentIntent
     {
-        if ($cart->meta->stripe_payment_intent ?? null) {
-            return static::$stripe->paymentIntents->update($cart->meta->stripe_payment_intent, $params);
-        }
+        // if ($cart->meta->stripe_payment_intent ?? null) {
+        //     return static::$stripe->paymentIntents->update($cart->meta->stripe_payment_intent, $params);
+        // }
 
         return static::$stripe->paymentIntents->create(
-            params: $params,
+            params: $params->toArray(),
             opts: $this->idempotencyKeyHeader('cart-'.$cart->id.md5($params)),
         );
     }
