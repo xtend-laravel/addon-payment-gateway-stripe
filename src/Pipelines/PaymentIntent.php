@@ -34,7 +34,7 @@ class PaymentIntent
             return $next($cart);
         }
 
-        $shippingTotal = $cart->shippingTotal->value ?? 2000;
+        $shippingTotal = $cart->shippingTotal->value ?? 0;
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
             'amount' => $cart->total->value + $shippingTotal,
             'currency' => $cart->currency->code,
