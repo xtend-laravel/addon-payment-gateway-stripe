@@ -30,13 +30,15 @@ class PaymentIntent
         $this->initStripe();
         $shipping = $cart->shippingAddress;
 
-        if ($cart->total->value <= 0) {
+        if ($cart->total->value <= 0 && $cart->lines->isEmpty()) {
             return $next($cart);
         }
 
+        $giftWrapFee = $cart->total->value === 0 ? 50 : 0;
         $shippingTotal = $cart->shippingTotal->value ?? 0;
+        $amount = $cart->total->value + $shippingTotal + $giftWrapFee;
         $paymentIntent = $this->updateOrCreatePaymentIntent($cart, collect([
-            'amount' => $cart->total->value + $shippingTotal,
+            'amount' => $amount,
             'currency' => $cart->currency->code,
             'automatic_payment_methods' => [
                 'enabled' => true,
